@@ -10,6 +10,7 @@ and maintain connections.
 
 import os.path
 import socket
+import sys
 
 from urllib3.poolmanager import PoolManager, proxy_from_url
 from urllib3.response import HTTPResponse
@@ -534,5 +535,25 @@ class HTTPAdapter(BaseAdapter):
                 raise InvalidHeader(e, request=request)
             else:
                 raise
+
+        # Check for Python version and apply necessary changes for proxy authentication
+        if sys.version_info[:3] == (3, 8, 12):
+            if resp.status == 407:
+                request.headers['Proxy-Authorization'] = _basic_auth_str(
+                    request.headers.get('Proxy-Authorization-Username', ''),
+                    request.headers.get('Proxy-Authorization-Password', '')
+                )
+                resp = conn.urlopen(
+                    method=request.method,
+                    url=url,
+                    body=request.body,
+                    headers=request.headers,
+                    redirect=False,
+                    assert_same_host=False,
+                    preload_content=False,
+                    decode_content=False,
+                    retries=self.max_retries,
+                    timeout=timeout
+                )
 
         return self.build_response(request, resp)
