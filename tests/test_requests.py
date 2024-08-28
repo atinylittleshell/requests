@@ -1995,6 +1995,14 @@ class TestRequests:
         assert not r.history[1].is_redirect
         assert r.url == urls_test[2]
 
+    def test_proxy_authentication_python_3_8_12(self, httpbin):
+        proxies = {
+            "http": "http://username:password@proxy.example.com:8080",
+            "https": "http://username:password@proxy.example.com:8080",
+        }
+        r = requests.get(httpbin('get'), proxies=proxies)
+        assert r.status_code == 200
+
 
 class TestCaseInsensitiveDict:
 
